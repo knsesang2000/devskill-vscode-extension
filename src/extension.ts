@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as http from 'http';
 import * as https from 'https';
+import { verifyNodeServerJs } from './dockerVerify';
 
 function postJSON(url: string, payload: any): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -54,25 +55,44 @@ export function activate(context: vscode.ExtensionContext) {
     const language = editor.document.languageId; // 'javascript' | 'typescript' etc.
 
     const pick = await vscode.window.showQuickPick([
-      { label: 'Node.js', value: 'node' },
-      { label: 'Deno', value: 'deno' },
-      { label: 'Bun', value: 'bun' },
+      { label: 'Node.js (local Docker verify)', value: 'node' },
+      { label: 'Deno (future)', value: 'deno' },
+      { label: 'Bun (future)', value: 'bun' },
     ], { placeHolder: 'Select runtime to evaluate against' });
 
     if (!pick) { return; }
 
     const runtime = pick.value;
 
-    // Backend URL (configurable via settings)
+    // 1) Local verification in Linux container via Docker/Podman (Windows/Mac/Linux 지원)
+    //    비용 절약 + 실제 리눅스 환경 재현
+    let localPassed: boolean | undefined;
+    let localInfo = '';
+    if (runtime === 'node') {
+      vscode.window.setStatusBarMessage('DevSkill: Running local container verify...', 2000);
+      try {
+        const { passed, info } = await verifyNodeServerJs(code);
+        localPassed = passed;
+        localInfo = info;
+        vscode.window.showInformationMessage(`Local verify: ${passed ? 'passed' : 'failed'} - ${info}`);
+      } catch (e: any) {
+        vscode.window.showWarningMessage(`Local verify error: ${e?.message || e}`);
+      }
+    }
+
+    // 2) 서버 제출(옵션): 현재는 stub 채점
     const apiBase = vscode.workspace.getConfiguration('devskill').get<string>('apiBase') || 'http://localhost:8080';
     const url = `${apiBase.replace(/\/$/, '')}/api/v1/submissions`;
 
-    const payload = { problemId, language, runtime, code };
+    const payload: any = { problemId, language, runtime, code };
+    if (typeof localPassed === 'boolean') {
+      payload.localVerify = { passed: localPassed, info: localInfo };
+    }
 
-    vscode.window.setStatusBarMessage('DevSkill: Submitting...', 2000);
+    vscode.window.setStatusBarMessage('DevSkill: Submitting to server...', 2000);
     try {
       const res = await postJSON(url, payload);
-      vscode.window.showInformationMessage(`DevSkill: ${res.status || res.statusCode} | score=${res.score ?? '-'} | notes=${res.notes ?? ''}`);
+      vscode.window.showInformationMessage(`Server result: ${res.status || res.statusCode} | score=${res.score ?? '-'} | notes=${res.notes ?? ''}`);
     } catch (e: any) {
       vscode.window.showErrorMessage(`DevSkill submit failed: ${e?.message || e}`);
     }
