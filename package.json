@@ -1,0 +1,24 @@
+{
+  "name": "devskill-vscode-extension",
+  "displayName": "DevSkill Evaluator",
+  "description": "Submit, review, and coach inside VS Code (MVP)",
+  "version": "0.0.1",
+  "publisher": "devskill",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:devskill.helloWorld"],
+  "main": "dist/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "devskill.helloWorld", "title": "DevSkill: Hello World" }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.4.0"
+  }
+}
