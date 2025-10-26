@@ -1,21 +1,23 @@
 import * as vscode from 'vscode';
+import * as http from 'http';
 import * as https from 'https';
 
 function postJSON(url: string, payload: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const data = Buffer.from(JSON.stringify(payload));
     const u = new URL(url);
-    const opts: https.RequestOptions = {
+    const isHttps = u.protocol === 'https:';
+    const opts: (http.RequestOptions | https.RequestOptions) = {
       method: 'POST',
       hostname: u.hostname,
-      port: u.port || (u.protocol === 'https:' ? 443 : 80),
+      port: u.port || (isHttps ? 443 : 80),
       path: u.pathname + (u.search || ''),
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': data.length,
       },
     };
-    const req = https.request(opts, (res) => {
+    const req = (isHttps ? https : http).request(opts as any, (res) => {
       const chunks: any[] = [];
       res.on('data', (d) => chunks.push(d));
       res.on('end', () => {
@@ -47,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const code = editor.document.getText();
 
-    // For MVP: fixed problem and runtime detection heuristics
+    // For MVP: fixed problem and runtime selection
     const problemId = 'runtime-server-hello';
     const language = editor.document.languageId; // 'javascript' | 'typescript' etc.
 
@@ -61,9 +63,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     const runtime = pick.value;
 
-    // Backend URL (configure later via settings). For now, localhost:8080
-    const apiBase = vscode.workspace.getConfiguration('devskill').get<string>('apiBase') || 'https://devskill-backend-go.fly.dev';
-    const url = `${apiBase}/api/v1/submissions`;
+    // Backend URL (configurable via settings)
+    const apiBase = vscode.workspace.getConfiguration('devskill').get<string>('apiBase') || 'http://localhost:8080';
+    const url = `${apiBase.replace(/\/$/, '')}/api/v1/submissions`;
 
     const payload = { problemId, language, runtime, code };
 

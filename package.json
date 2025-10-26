@@ -11,6 +11,17 @@
     "onCommand:devskill.submitCurrent"
   ],
   "main": "dist/extension.js",
+  "configuration": {
+    "type": "object",
+    "title": "DevSkill Settings",
+    "properties": {
+      "devskill.apiBase": {
+        "type": "string",
+        "default": "http://localhost:8080",
+        "description": "DevSkill Backend base URL"
+      }
+    }
+  },
   "contributes": {
     "commands": [
       { "command": "devskill.helloWorld", "title": "DevSkill: Hello World" },
