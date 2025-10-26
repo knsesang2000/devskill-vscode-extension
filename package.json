@@ -6,11 +6,15 @@
   "publisher": "devskill",
   "engines": { "vscode": "^1.80.0" },
   "categories": ["Other"],
-  "activationEvents": ["onCommand:devskill.helloWorld"],
+  "activationEvents": [
+    "onCommand:devskill.helloWorld",
+    "onCommand:devskill.submitCurrent"
+  ],
   "main": "dist/extension.js",
   "contributes": {
     "commands": [
-      { "command": "devskill.helloWorld", "title": "DevSkill: Hello World" }
+      { "command": "devskill.helloWorld", "title": "DevSkill: Hello World" },
+      { "command": "devskill.submitCurrent", "title": "DevSkill: Submit Current File" }
     ]
   },
   "scripts": {
@@ -18,6 +22,7 @@
     "watch": "tsc -w -p ./"
   },
   "devDependencies": {
+    "@types/node": "^20.11.0",
     "@types/vscode": "^1.80.0",
     "typescript": "^5.4.0"
   }
